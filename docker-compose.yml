@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  # Base de Dados para utilizadores e metadados
+  cloud-db:
+    image: postgres:15
+    container_name: cloud-db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: cloud_db
+    networks:
+      - cloud-network
+
+  # Nó Mestre (é a API FastAPI)
+  master-node:
+    build: ./master_node
+    container_name: master-node
+    ports:
+      - "8000:8000"
+    depends_on:
+      - cloud-db
+    networks:
+      - cloud-network
+
+  # Nó de Trabalho (Simulado)
+  worker-1:
+    image: python:3.11-slim
+    container_name: worker-1
+    command: tail -f /dev/null
+    networks:
+      - cloud-network
+
+networks:
+  cloud-network:
+    driver: bridge
