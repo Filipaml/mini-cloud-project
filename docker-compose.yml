@@ -1,7 +1,4 @@
-version: '3.8'
-
 services:
-  # Base de Dados para utilizadores e metadados
   cloud-db:
     image: postgres:15
     container_name: cloud-db
@@ -12,7 +9,6 @@ services:
     networks:
       - cloud-network
 
-  # Nó Mestre (é a API FastAPI)
   master-node:
     build: ./master_node
     container_name: master-node
@@ -23,11 +19,11 @@ services:
     networks:
       - cloud-network
 
-  # Nó de Trabalho (Simulado)
   worker-1:
-    image: python:3.11-slim
+    build: ./worker_node
     container_name: worker-1
-    command: tail -f /dev/null
+    ports:
+      - "8001:8001" # Porta exposta para testar o Worker de forma isolada
     networks:
       - cloud-network
 
