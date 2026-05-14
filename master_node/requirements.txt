@@ -6,3 +6,6 @@ pyjwt
 python-multipart
 httpx
 docker>=7.0.0
+aiofiles
+sqlalchemy>=2.0
+psycopg2-binary
