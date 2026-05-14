@@ -5,3 +5,4 @@ bcrypt==3.2.2
 pyjwt
 python-multipart
 httpx
+docker>=7.0.0
