@@ -6,6 +6,11 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: cloud_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d cloud_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     networks:
       - cloud-network
 
@@ -15,11 +20,13 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - cloud-db
+      cloud-db:
+        condition: service_healthy
     networks:
       - cloud-network
     environment:
       - DOCKER_HOST=tcp://host.docker.internal:2375
+      - DATABASE_URL=postgresql+psycopg2://user:password@cloud-db:5432/cloud_db
       - WORKER_IMAGE=mini-cloud-worker:latest
       - WORKER_NETWORK=mini-cloud-project_cloud-network
       - MIN_WORKERS=1
@@ -27,6 +34,9 @@ services:
       - SCALE_UP_THRESHOLD=60
       - SCALE_DOWN_THRESHOLD=20
       - COOLDOWN_SECONDS=30
+    volumes:
+      - storage_primary:/data/storage
+      - storage_replica:/data/storage_replica
 
   worker-1:
     build: ./worker_node
@@ -42,3 +52,7 @@ services:
 networks:
   cloud-network:
     driver: bridge
+
+volumes:
+  storage_primary:
+  storage_replica:
