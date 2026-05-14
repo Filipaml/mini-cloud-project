@@ -18,12 +18,24 @@ services:
       - cloud-db
     networks:
       - cloud-network
+    environment:
+      - DOCKER_HOST=tcp://host.docker.internal:2375
+      - WORKER_IMAGE=mini-cloud-worker:latest
+      - WORKER_NETWORK=mini-cloud-project_cloud-network
+      - MIN_WORKERS=1
+      - MAX_WORKERS=5
+      - SCALE_UP_THRESHOLD=60
+      - SCALE_DOWN_THRESHOLD=20
+      - COOLDOWN_SECONDS=30
 
   worker-1:
     build: ./worker_node
+    image: mini-cloud-worker:latest
     container_name: worker-1
+    labels:
+      - "role=worker"
     ports:
-      - "8001:8001" # Porta exposta para testar o Worker de forma isolada
+      - "8001:8001"
     networks:
       - cloud-network
 

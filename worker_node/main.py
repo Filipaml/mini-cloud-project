@@ -26,9 +26,9 @@ def execute_job(job: JobRequest):
             shell=True,
             capture_output=True,
             text=True,
-            timeout=60 # Proteção: se a tarefa demorar mais de 60s, é cancelada
+            timeout=80 # Protecao: se a tarefa demorar mais de 80s, e cancelada
         )
-        
+
         return JobResponse(
             status="success" if result.returncode == 0 else "failed",
             stdout=result.stdout,
@@ -40,3 +40,13 @@ def execute_job(job: JobRequest):
         raise HTTPException(status_code=408, detail="Timeout: A tarefa demorou demasiado tempo a executar.")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro interno no Worker: {str(e)}")
+
+# Endpoint de stress (Semana 3)
+@app.post("/stress")
+def stress(seconds: int = 30):
+    import time
+    t0 = time.time()
+    x = 0
+    while time.time() - t0 < seconds:
+        x += sum(i*i for i in range(10000))
+    return {"x": x}
