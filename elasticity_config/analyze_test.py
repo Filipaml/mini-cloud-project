@@ -14,7 +14,7 @@ try:
     with open(metrics_file) as f:
         dados = json.load(f)
 except FileNotFoundError:
-    print(f"❌ Ficheiro '{metrics_file}' não encontrado")
+    print(f" Ficheiro '{metrics_file}' não encontrado")
     print("   Corre primeiro: python monitor.py (enquanto o stress test corre)")
     sys.exit(1)
 
@@ -47,7 +47,7 @@ for i, d in enumerate(dados):
     # Detectar mudanças no número de workers
     if workers != last_workers:
         cooldown_remaining = max(0, COOLDOWN_SECONDS - (t - last_scale_time))
-        print(f"\n⚡ t={t:5.1f}s: SCALING {last_workers} → {workers} workers")
+        print(f"\n t={t:5.1f}s: SCALING {last_workers} → {workers} workers")
         print(f"   CPU médio antes: {dados[i-1]['avg_cpu']:.1f}%")
         print(f"   CPU médio depois: {cpu:.1f}%")
         last_workers = workers
@@ -80,7 +80,7 @@ for i, d in enumerate(dados):
             missed_opportunities.append((t, cpu, workers))
 
 if in_cooldown_at:
-    print(f"\n🕐 BLOQUEADO POR COOLDOWN ({len(in_cooldown_at)} momentos):")
+    print(f"\n BLOQUEADO POR COOLDOWN ({len(in_cooldown_at)} momentos):")
     for t, cpu, workers in in_cooldown_at[:5]:  # mostrar primeiros 5
         print(f"   t={t:5.1f}s: CPU={cpu:5.1f}% (workers={workers}) — QUERIA escalar mas em cooldown")
     if len(in_cooldown_at) > 5:
@@ -115,16 +115,16 @@ print("DIAGNÓSTICO")
 print("="*70)
 
 if pct_above > 50 and max_workers < 5:
-    print("\n⚠️  PROBLEMA: CPU alto durante muito tempo mas não escalou até ao máximo")
+    print("\n  PROBLEMA: CPU alto durante muito tempo mas não escalou até ao máximo")
     print("    Possíveis causas:")
     print("    1. Cooldown demasiado longo (60s) — considera reduzir para 30s")
     print("    2. Check interval demasiado espaçado (15s) — considera 10s")
     print("    3. Carga do stress test demasiado intensa para o sistema escalar")
 elif max_workers == 5:
-    print("\n✅ Escalou até ao máximo (5 workers)")
+    print("\n Escalou até ao máximo (5 workers)")
     if avg_cpu > SCALE_UP_THRESHOLD:
         print("    Mas CPU ainda está alto — precisas de MAX_WORKERS maior ou menos carga")
 else:
-    print("\n✅ Sistema comportou-se de forma razoável")
+    print("\n Sistema comportou-se de forma razoável")
 
 print("\n" + "="*70)

@@ -41,16 +41,37 @@ def get_json(url, token=None):
 
 
 def register_and_login():
+    import urllib.parse  # para formatar o formulário
+    
+    # 1. Registo (Continua igual, este funciona como JSON)
     try:
         post_json(f"{MASTER_URL}/register", {"username": USERNAME, "password": PASSWORD})
-        print("  ✓ Utilizador registado")
+        print("    Utilizador registado")
     except urllib.error.HTTPError as e:
         if e.code == 400:
-            print("  ✓ A usar conta existente")
+            print("    A usar conta existente")
         else:
             raise
-    resp = post_json(f"{MASTER_URL}/login", {"username": USERNAME, "password": PASSWORD})
-    return resp["access_token"]
+
+    # 2. Login (A grande mudança está aqui!)
+    print("   [2/2] A obter token de acesso...")
+    
+    # Em vez de JSON, enviamos dados de formulário (URL Encoded)
+    login_data = urllib.parse.urlencode({
+        "username": USERNAME, 
+        "password": PASSWORD
+    }).encode('utf-8')
+    
+    # Criamos o pedido para o endpoint /token (que é o padrão do Master)
+    req = urllib.request.Request(
+        f"{MASTER_URL}/login", 
+        data=login_data,
+        headers={'Content-Type': 'application/x-www-form-urlencoded'}
+    )
+    
+    with urllib.request.urlopen(req) as resp:
+        data = json.loads(resp.read().decode())
+        return data["access_token"]
 
 
 def send_stress_job(token, duration):
@@ -93,7 +114,7 @@ def print_metrics(token):
             avg_cpu = sum(w['cpu_percent'] for w in workers) / len(workers)
             print(f"  CPU médio: {avg_cpu:.1f}%  (threshold={m.get('scale_up_threshold', '?')}%)")
     except Exception as e:
-        print(f"  ⚠ Erro ao obter métricas: {e}")
+        print(f"   Erro ao obter métricas: {e}")
 
 
 def test_gradual(token):
@@ -138,7 +159,7 @@ def test_gradual(token):
         print(f"✓ Wave {wave_num} concluída: {results['success']} ok, {results['failed']} failed, {results['erro']} erros")
         
         if wave_num < len(waves):
-            print("\n⏱  Aguardar 30s para ver reação do sistema...")
+            print("\n  Aguardar 30s para ver reação do sistema...")
             time.sleep(30)
 
 
@@ -173,7 +194,7 @@ def test_burst(token):
         print(f"✓ Burst {burst_num} concluído: {results['success']} ok, {results['failed']} failed, {results['erro']} erros")
         
         if burst_num < 3:
-            print("\n⏱  Pausa de 45s...")
+            print("\n  Pausa de 45s...")
             time.sleep(45)
 
 
@@ -202,12 +223,12 @@ def test_sustained(token):
             done = sum(results.values())
             print(f"  [{done:2d}/12] {status[:20]}", flush=True)
     
-    print(f"\n✓ Teste concluído: {results['success']} ok, {results['failed']} failed, {results['erro']} erros")
+    print(f"\n Teste concluído: {results['success']} ok, {results['failed']} failed, {results['erro']} erros")
 
 
 def main():
     if len(sys.argv) < 2:
-        print("Uso: python stress_test_v2.py [gradual|burst|sustained]")
+        print("Uso: python stress_test.py [gradual|burst|sustained]")
         print("\ngradual  - aumenta carga em 3 waves (melhor para ver scaling)")
         print("burst    - 3 rajadas intensas com pausas (testa resposta rápida)")
         print("sustained- carga constante moderada (testa estabilidade)")
@@ -215,7 +236,7 @@ def main():
     
     mode = sys.argv[1].lower()
     if mode not in ["gradual", "burst", "sustained"]:
-        print(f"❌ Modo '{mode}' inválido. Usa: gradual, burst ou sustained")
+        print(f" Modo '{mode}' inválido. Usa: gradual, burst ou sustained")
         sys.exit(1)
     
     print(f"Master: {MASTER_URL}")
@@ -238,7 +259,7 @@ def main():
     print_metrics(token)
     print("="*50)
     
-    print("\n💡 Dica: Corre 'python analyze_test.py' para analisar os resultados")
+    print("\n Corre 'python analyze_test.py' para analisar os resultados")
 
 
 if __name__ == "__main__":

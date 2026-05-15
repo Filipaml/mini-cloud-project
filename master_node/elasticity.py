@@ -113,13 +113,24 @@ class ElasticityEngine:
         """Cria um novo worker. Nome único, mesma network do compose."""
         name = f"worker-{int(time.time())}"
         logger.info("Spawning new worker: %s", name)
+        
         return self.client.containers.run(
             WORKER_IMAGE,
             name=name,
             detach=True,
             labels={"role": "worker"},
             network=WORKER_NETWORK,
-            ports={"8001/tcp": None},  # porta dinâmica no host
+            ports={"8001/tcp": None},
+            # --- SOLUÇÃO UNIVERSAL ---
+            volumes={
+                # Atenção: Tem de ser o nome exato do volume gerado pelo docker-compose.
+                # Normalmente o compose adiciona o nome da pasta do projeto antes.
+                # Ex: se a pasta se chama mini-cloud-project-main, o volume chama-se:
+                'mini-cloud-project-main_storage_primary': {
+                    'bind': '/data/storage',
+                    'mode': 'rw'
+                }
+            }
         )
 
     def _terminate_worker(self, worker: WorkerInfo) -> None:

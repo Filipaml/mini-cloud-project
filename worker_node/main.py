@@ -1,6 +1,7 @@
+import subprocess
+import uuid
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-import subprocess
 
 app = FastAPI(title="Cloud Worker Node - Compute Engine")
 
@@ -18,16 +19,33 @@ class JobResponse(BaseModel):
 @app.post("/execute", response_model=JobResponse)
 def execute_job(job: JobRequest):
     try:
-        # subprocess.run inicia um novo processo no sistema operativo do contentor
-        # capture_output=True guarda o que apareceria no terminal (stdout) e os erros (stderr)
-        # text=True devolve em formato de string em vez de bytes
+        # Executa o comando
         result = subprocess.run(
             job.command,
             shell=True,
             capture_output=True,
             text=True,
-            timeout=80 # Protecao: se a tarefa demorar mais de 80s, e cancelada
+            timeout=80
         )
+
+        # --- A MAGIA DA SEMANA 4 ---
+        # Criar um nome único para o relatório desta tarefa
+        job_id = str(uuid.uuid4())
+        caminho_ficheiro = f"/data/storage/resultado_job_{job_id}.txt"
+        
+        # Guardar o resultado na pasta partilhada (o volume do Docker)
+        try:
+            with open(caminho_ficheiro, "w") as f:
+                f.write(f"--- RELATÓRIO DE TAREFA ---\n")
+                f.write(f"ID da Tarefa: {job_id}\n")
+                f.write(f"Comando executado: {job.command}\n")
+                f.write(f"Status Final: {'Sucesso' if result.returncode == 0 else 'Falha'}\n")
+                f.write(f"--- OUTPUT ---\n{result.stdout}\n")
+                if result.stderr:
+                    f.write(f"--- ERROS ---\n{result.stderr}\n")
+        except Exception as e:
+            print(f"Aviso: Não foi possível gravar o ficheiro no storage. {e}")
+        # ---------------------------
 
         return JobResponse(
             status="success" if result.returncode == 0 else "failed",

@@ -13,6 +13,8 @@ services:
       retries: 10
     networks:
       - cloud-network
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
 
   master-node:
     build: ./master_node
@@ -25,7 +27,7 @@ services:
     networks:
       - cloud-network
     environment:
-      - DOCKER_HOST=tcp://host.docker.internal:2375
+      #- DOCKER_HOST=tcp://host.docker.internal:2375
       - DATABASE_URL=postgresql+psycopg2://user:password@cloud-db:5432/cloud_db
       - WORKER_IMAGE=mini-cloud-worker:latest
       - WORKER_NETWORK=mini-cloud-project_cloud-network
@@ -37,6 +39,7 @@ services:
     volumes:
       - storage_primary:/data/storage
       - storage_replica:/data/storage_replica
+      - /var/run/docker.sock:/var/run/docker.sock
 
   worker-1:
     build: ./worker_node
@@ -48,6 +51,8 @@ services:
       - "8001:8001"
     networks:
       - cloud-network
+    volumes:
+      - storage_primary:/data/storage
 
 networks:
   cloud-network:
